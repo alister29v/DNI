@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de DNI con QR</title>
+    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f5;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            margin-top: 40px;
+        }
+        #reader {
+            width: 100%;
+            height: 400px;
+            margin-bottom: 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            display: none; /* Ocultamos el lector inicialmente */
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #f4f4f9;
+        }
+        .message {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .error-message {
+            color: red;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 14px;
+            color: #777;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .button-group {
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Registro de DNI con QR</h1>
+
+        <div class="message" id="start-message">
+            <p>Para continuar, haz clic en el botón de abajo para activar la cámara y escanear los códigos QR.</p>
+            <button onclick="startCamera()">Ingresar a la cámara</button>
+        </div>
+
+        <div id="reader"></div>
+
+        <h2>Lista de DNIs Registrados</h2>
+        <table id="dniTable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Número de DNI</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Los DNIs registrados aparecerán aquí -->
+            </tbody>
+        </table>
+        <div id="error-message" class="error-message"></div>
+
+        <!-- Botones para copiar y eliminar la lista -->
+        <div class="button-group">
+            <button onclick="copiarLista()">Copiar Lista</button>
+            <button onclick="eliminarLista()">Eliminar Lista</button>
+        </div>
+    </div>
+
+    <div class="footer">
+        © 2024 Registro DNI | Desarrollado por Javivi
+    </div>
+
+    <script>
+        let contador = 0;
+
+        function agregarDNI(dniValue) {
+            contador++;
+            const table = document.getElementById('dniTable').getElementsByTagName('tbody')[0];
+            const newRow = table.insertRow();
+            const cell1 = newRow.insertCell(0);
+            const cell2 = newRow.insertCell(1);
+
+            cell1.innerHTML = contador;
+            cell2.innerHTML = dniValue;
+        }
+
+        function onScanSuccess(qrCodeMessage) {
+            agregarDNI(qrCodeMessage); // Añadir DNI escaneado a la tabla
+        }
+
+        function onScanError(errorMessage) {
+            document.getElementById('error-message').innerText = "Error en el escaneo: " + errorMessage;
+        }
+
+        // Iniciar el escáner de QR cuando el usuario da acceso a la cámara
+        function startCamera() {
+            const html5QrCode = new Html5Qrcode("reader");
+
+            // Ocultar el mensaje inicial y mostrar el escáner de QR
+            document.getElementById('start-message').style.display = 'none';
+            document.getElementById('reader').style.display = 'block';
+
+            // Iniciar el escaneo
+            html5QrCode.start(
+                { facingMode: "environment" }, // Usa la cámara trasera
+                {
+                    fps: 10,    // Escaneo a 10 cuadros por segundo
+                    qrbox: { width: 300, height: 300 }  // Tamaño del área de escaneo
+                },
+                onScanSuccess,
+                onScanError
+            ).catch(err => {
+                // Manejo de errores si la cámara no se puede iniciar
+                document.getElementById('error-message').innerText = "No se pudo iniciar la cámara: " + err;
+            });
+        }
+
+        // Función para copiar la lista de DNIs
+        function copiarLista() {
+            const table = document.getElementById('dniTable');
+            let listaDnis = '';
+
+            for (let i = 1, row; row = table.rows[i]; i++) {
+                listaDnis += row.cells[1].innerText + '\n'; // Obtener el contenido de la celda de DNI
+            }
+
+            const tempInput = document.createElement('textarea');
+            tempInput.value = listaDnis;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            alert('Lista copiada al portapapeles');
+        }
+
+        // Función para eliminar la lista de DNIs
+        function eliminarLista() {
+            const table = document.getElementById('dniTable').getElementsByTagName('tbody')[0];
+            table.innerHTML = ''; // Eliminar todas las filas
+            contador = 0; // Reiniciar contador
+        }
+    </script>
+</body>
+</html>
